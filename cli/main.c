@@ -1,63 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "../include/asmlint.h"
-#include "../include/rules.h"
 
-static asmlint_config_t g_config;
-
-int asmlint_init(const asmlint_config_t *config) {
-    if (!config) return -1;
-    g_config = *config;
-    return 0;
+static void report_issue(const asm_issue_t *issue, void *user_data) {
+    (void)user_data;
+    const char *sev = (issue->severity == ASM_SEVERITY_ERROR) ? "ERROR" :
+                      (issue->severity == ASM_SEVERITY_WARNING) ? "WARN" : "INFO";
+    printf("[%s] %s:%u [%s] %s\n", sev, issue->file_path, issue->line_number, issue->rule_id, issue->message);
 }
 
-int asmlint_process_file(const char *filepath) {
-    FILE *fp = fopen(filepath, "rb");
-    if (!fp) return -1;
-
-    char line[1024];
-    uint32_t line_num = 0;
-
-    while (fgets(line, sizeof(line), fp)) {
-        line_num++;
-
-        /* Rule 1: Check trailing whitespace */
-        size_t len = strlen(line);
-        if (len > 1 && (line[len - 2] == ' ' || line[len - 2] == '\t')) {
-            if (g_config.callback) {
-                asm_issue_t issue = {
-                    .line_number = line_num,
-                    .severity = ASM_SEVERITY_WARNING,
-                    .rule_id = "W001",
-                };
-                strncpy(issue.file_path, filepath, sizeof(issue.file_path) - 1);
-                snprintf(issue.message, sizeof(issue.message), "Trailing whitespace detected");
-                g_config.callback(&issue, g_config.user_data);
-            }
-        }
-
-        /* Rule 2: Unaligned stack pointer adjustment detection */
-        if (strstr(line, "sub rsp,") || strstr(line, "sub esp,")) {
-            if (strstr(line, "sub rsp, 8") || strstr(line, "sub esp, 4")) {
-                if (g_config.callback) {
-                    asm_issue_t issue = {
-                        .line_number = line_num,
-                        .severity = ASM_SEVERITY_ERROR,
-                        .rule_id = "E102",
-                    };
-                    strncpy(issue.file_path, filepath, sizeof(issue.file_path) - 1);
-                    snprintf(issue.message, sizeof(issue.message), "Unrecommended stack allocation size (potential 16-byte misalignment)");
-                    g_config.callback(&issue, g_config.user_data);
-                }
-            }
-        }
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Usage: %s <file_or_directory_path>\n", argv[0]);
+        return 1;
     }
 
-    fclose(fp);
-    return 0;
-}
+    asmlint_config_t config = {
+        .thread_count = 0,
+        .require_tab_indent = 1,
+        .max_line_length = 100,
+        .callback = report_issue,
+        .user_data = NULL
+    };
 
-void asmlint_destroy(void) {
-    /* Cleanup resources */
+    asmlint_init(&config);
+    
+    for (int i = 1; i < argc; i++) {
+        asmlint_process_file(argv[i]);
+    }
+
+    asmlint_destroy();
+    return 0;
 }
