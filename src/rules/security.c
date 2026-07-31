@@ -1,0 +1,1 @@
+/* ASM Linter Security Rules */

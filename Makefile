@@ -22,4 +22,7 @@ $(BIN): cli/main.c $(LIB)
 clean:
 	rm -f $(OBJS) $(LIB) $(BIN)
 
-.PHONY: all clean
+check: $(BIN)
+	./$(BIN) test.asm
+
+.PHONY: all clean check
