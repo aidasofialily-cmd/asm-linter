@@ -58,6 +58,11 @@ int asmlint_process_file(const char *filepath) {
     return 0;
 }
 
+int asmlint_process_directory_recursive(const char *dirpath) {
+    (void)dirpath;
+    return 0;
+}
+
 void asmlint_destroy(void) {
     /* Cleanup resources */
 }

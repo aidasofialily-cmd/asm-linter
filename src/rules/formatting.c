@@ -1,0 +1,1 @@
+/* ASM Linter Formatting Rules */

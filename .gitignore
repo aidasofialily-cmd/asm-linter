@@ -38,6 +38,8 @@
 *.exe
 *.out
 *.app
+asmlint
+test.asm
 
 # Build directories
 build/
