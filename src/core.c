@@ -12,7 +12,35 @@ int asmlint_init(const asmlint_config_t *config) {
     return 0;
 }
 
+static int ends_with_case_insensitive(const char *str, const char *suffix) {
+    size_t str_len = strlen(str);
+    size_t suffix_len = strlen(suffix);
+    if (str_len < suffix_len) {
+        return 0;
+    }
+    const char *p = str + str_len - suffix_len;
+    while (*p && *suffix) {
+        char c1 = *p;
+        char c2 = *suffix;
+        if (c1 >= 'A' && c1 <= 'Z') c1 = c1 - 'A' + 'a';
+        if (c2 >= 'A' && c2 <= 'Z') c2 = c2 - 'A' + 'a';
+        if (c1 != c2) {
+            return 0;
+        }
+        p++;
+        suffix++;
+    }
+    return 1;
+}
+
 int asmlint_process_file(const char *filepath) {
+    if (filepath) {
+        if (ends_with_case_insensitive(filepath, ".html") || ends_with_case_insensitive(filepath, ".css")) {
+            printf("Your .html and .css files are not supported.\n");
+            return -1;
+        }
+    }
+
     FILE *fp = fopen(filepath, "rb");
     if (!fp) return -1;
 
