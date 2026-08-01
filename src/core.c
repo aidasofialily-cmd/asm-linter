@@ -39,6 +39,10 @@ int asmlint_process_file(const char *filepath) {
             printf("Your .html and .css files are not supported.\n");
             return -1;
         }
+        if (!ends_with_case_insensitive(filepath, ".asm")) {
+            printf("Please upload a .asm file.\n");
+            return -1;
+        }
     }
 
     FILE *fp = fopen(filepath, "rb");
